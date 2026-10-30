@@ -1,0 +1,10 @@
+month,service_item,cost
+2025-01-01,EC2: Compute Instance,812345.67
+2025-01-01,S3: Storage,41200.00
+2025-01-01,Support: Business,30000.00
+2025-02-01,EC2: Compute Instance,698765.43
+2025-02-01,S3: Storage,42950.10
+2025-02-01,Support: Business,30000.00
+2025-03-01,EC2: Compute Instance,701234.56
+2025-03-01,S3: Storage,44710.25
+2025-03-01,Support: Business,30000.00

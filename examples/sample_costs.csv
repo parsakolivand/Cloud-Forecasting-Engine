@@ -1,0 +1,325 @@
+month,service_item,cost
+2023-01-01,EC2: Compute Instance,928556.24
+2023-02-01,EC2: Compute Instance,925740.52
+2023-03-01,EC2: Compute Instance,1009998.6
+2023-04-01,EC2: Compute Instance,1014122.35
+2023-05-01,EC2: Compute Instance,867570.92
+2023-06-01,EC2: Compute Instance,646415.86
+2023-07-01,EC2: Compute Instance,575680.36
+2023-08-01,EC2: Compute Instance,858170.54
+2023-09-01,EC2: Compute Instance,1268903.45
+2023-10-01,EC2: Compute Instance,1273809.86
+2023-11-01,EC2: Compute Instance,1169097.59
+2023-12-01,EC2: Compute Instance,849537.08
+2024-01-01,EC2: Compute Instance,890959.82
+2024-02-01,EC2: Compute Instance,959004.17
+2024-03-01,EC2: Compute Instance,982080.18
+2024-04-01,EC2: Compute Instance,896383.8
+2024-05-01,EC2: Compute Instance,790373.87
+2024-06-01,EC2: Compute Instance,597616.39
+2024-07-01,EC2: Compute Instance,558944.4
+2024-08-01,EC2: Compute Instance,780572.05
+2024-09-01,EC2: Compute Instance,1149463.82
+2024-10-01,EC2: Compute Instance,1259228.19
+2024-11-01,EC2: Compute Instance,1013521.47
+2024-12-01,EC2: Compute Instance,799030.75
+2025-01-01,EC2: Compute Instance,743917.47
+2025-02-01,EC2: Compute Instance,844023.16
+2025-03-01,EC2: Compute Instance,912910.47
+2025-04-01,EC2: Compute Instance,866440.83
+2025-05-01,EC2: Compute Instance,812820.49
+2025-06-01,EC2: Compute Instance,607399.56
+2025-07-01,EC2: Compute Instance,547077.24
+2025-08-01,EC2: Compute Instance,731163.66
+2025-09-01,EC2: Compute Instance,1113549.5
+2025-10-01,EC2: Compute Instance,1078576.48
+2025-11-01,EC2: Compute Instance,911127.26
+2025-12-01,EC2: Compute Instance,712812.42
+2023-01-01,EC2: Data Transfer,31004.47
+2023-02-01,EC2: Data Transfer,33703.88
+2023-03-01,EC2: Data Transfer,37471.83
+2023-04-01,EC2: Data Transfer,35030.28
+2023-05-01,EC2: Data Transfer,27235.98
+2023-06-01,EC2: Data Transfer,18000.76
+2023-07-01,EC2: Data Transfer,16127.64
+2023-08-01,EC2: Data Transfer,27731.61
+2023-09-01,EC2: Data Transfer,47865.29
+2023-10-01,EC2: Data Transfer,46222.53
+2023-11-01,EC2: Data Transfer,40316.11
+2023-12-01,EC2: Data Transfer,27291.84
+2024-01-01,EC2: Data Transfer,39585.19
+2024-02-01,EC2: Data Transfer,47763.81
+2024-03-01,EC2: Data Transfer,47297.59
+2024-04-01,EC2: Data Transfer,41535.17
+2024-05-01,EC2: Data Transfer,40045.66
+2024-06-01,EC2: Data Transfer,23944.12
+2024-07-01,EC2: Data Transfer,21617.52
+2024-08-01,EC2: Data Transfer,36672.73
+2024-09-01,EC2: Data Transfer,60196.53
+2024-10-01,EC2: Data Transfer,61596.03
+2024-11-01,EC2: Data Transfer,50972.83
+2024-12-01,EC2: Data Transfer,33090.58
+2025-01-01,EC2: Data Transfer,50246.69
+2025-02-01,EC2: Data Transfer,56006.44
+2025-03-01,EC2: Data Transfer,63273.64
+2025-04-01,EC2: Data Transfer,55173.24
+2025-05-01,EC2: Data Transfer,50824.96
+2025-06-01,EC2: Data Transfer,33757.85
+2025-07-01,EC2: Data Transfer,28588.86
+2025-08-01,EC2: Data Transfer,48175.45
+2025-09-01,EC2: Data Transfer,76025.62
+2025-10-01,EC2: Data Transfer,79336.34
+2025-11-01,EC2: Data Transfer,66240.06
+2025-12-01,EC2: Data Transfer,46812.16
+2023-01-01,S3: Storage,41260.46
+2023-02-01,S3: Storage,39209.02
+2023-03-01,S3: Storage,44251.64
+2023-04-01,S3: Storage,45756.6
+2023-05-01,S3: Storage,46308.78
+2023-06-01,S3: Storage,46830.91
+2023-07-01,S3: Storage,50908.19
+2023-08-01,S3: Storage,51805.76
+2023-09-01,S3: Storage,54749.01
+2023-10-01,S3: Storage,56232.78
+2023-11-01,S3: Storage,60402.67
+2023-12-01,S3: Storage,59440.97
+2024-01-01,S3: Storage,60064.75
+2024-02-01,S3: Storage,63668.91
+2024-03-01,S3: Storage,65530.0
+2024-04-01,S3: Storage,69038.78
+2024-05-01,S3: Storage,70052.67
+2024-06-01,S3: Storage,71135.31
+2024-07-01,S3: Storage,74594.95
+2024-08-01,S3: Storage,72416.86
+2024-09-01,S3: Storage,75040.37
+2024-10-01,S3: Storage,76410.14
+2024-11-01,S3: Storage,79015.29
+2024-12-01,S3: Storage,79334.97
+2025-01-01,S3: Storage,84152.73
+2025-02-01,S3: Storage,84666.67
+2025-03-01,S3: Storage,84593.79
+2025-04-01,S3: Storage,87076.63
+2025-05-01,S3: Storage,90870.27
+2025-06-01,S3: Storage,93457.19
+2025-07-01,S3: Storage,96995.1
+2025-08-01,S3: Storage,100170.79
+2025-09-01,S3: Storage,98221.61
+2025-10-01,S3: Storage,97915.69
+2025-11-01,S3: Storage,98001.93
+2025-12-01,S3: Storage,103401.57
+2023-01-01,CloudWatch: Logs,17522.5
+2023-02-01,CloudWatch: Logs,18705.69
+2023-03-01,CloudWatch: Logs,18800.1
+2023-04-01,CloudWatch: Logs,19550.79
+2023-05-01,CloudWatch: Logs,21606.32
+2023-06-01,CloudWatch: Logs,17951.99
+2023-07-01,CloudWatch: Logs,16864.92
+2023-08-01,CloudWatch: Logs,16409.63
+2023-09-01,CloudWatch: Logs,17558.76
+2023-10-01,CloudWatch: Logs,20521.23
+2023-11-01,CloudWatch: Logs,20688.41
+2023-12-01,CloudWatch: Logs,23363.83
+2024-01-01,CloudWatch: Logs,21191.14
+2024-02-01,CloudWatch: Logs,24182.0
+2024-03-01,CloudWatch: Logs,20605.07
+2024-04-01,CloudWatch: Logs,17969.01
+2024-05-01,CloudWatch: Logs,18226.68
+2024-06-01,CloudWatch: Logs,16562.31
+2024-07-01,CloudWatch: Logs,23348.95
+2024-08-01,CloudWatch: Logs,18201.02
+2024-09-01,CloudWatch: Logs,25806.34
+2024-10-01,CloudWatch: Logs,21563.21
+2024-11-01,CloudWatch: Logs,24999.03
+2024-12-01,CloudWatch: Logs,20904.14
+2025-01-01,CloudWatch: Logs,22083.11
+2025-02-01,CloudWatch: Logs,23145.76
+2025-03-01,CloudWatch: Logs,22295.0
+2025-04-01,CloudWatch: Logs,24217.16
+2025-05-01,CloudWatch: Logs,21206.57
+2025-06-01,CloudWatch: Logs,16577.62
+2025-07-01,CloudWatch: Logs,15933.4
+2025-08-01,CloudWatch: Logs,22164.7
+2025-09-01,CloudWatch: Logs,30121.49
+2025-10-01,CloudWatch: Logs,26804.03
+2025-11-01,CloudWatch: Logs,24443.88
+2025-12-01,CloudWatch: Logs,22470.73
+2023-01-01,Lambda: Requests,21027.7
+2023-02-01,Lambda: Requests,18146.31
+2023-03-01,Lambda: Requests,17427.91
+2023-04-01,Lambda: Requests,21124.4
+2023-05-01,Lambda: Requests,17169.02
+2023-06-01,Lambda: Requests,17726.0
+2023-07-01,Lambda: Requests,13072.71
+2023-08-01,Lambda: Requests,12324.13
+2023-09-01,Lambda: Requests,17386.45
+2023-10-01,Lambda: Requests,26426.79
+2023-11-01,Lambda: Requests,24816.73
+2023-12-01,Lambda: Requests,15349.45
+2024-01-01,Lambda: Requests,18581.34
+2024-02-01,Lambda: Requests,25834.64
+2024-03-01,Lambda: Requests,18385.48
+2024-04-01,Lambda: Requests,17178.56
+2024-05-01,Lambda: Requests,21208.93
+2024-06-01,Lambda: Requests,13566.93
+2024-07-01,Lambda: Requests,14040.19
+2024-08-01,Lambda: Requests,18018.64
+2024-09-01,Lambda: Requests,26432.95
+2024-10-01,Lambda: Requests,29863.5
+2024-11-01,Lambda: Requests,23611.94
+2024-12-01,Lambda: Requests,19815.34
+2025-01-01,Lambda: Requests,16798.89
+2025-02-01,Lambda: Requests,24349.18
+2025-03-01,Lambda: Requests,23334.24
+2025-04-01,Lambda: Requests,20547.51
+2025-05-01,Lambda: Requests,20053.59
+2025-06-01,Lambda: Requests,16280.9
+2025-07-01,Lambda: Requests,19004.2
+2025-08-01,Lambda: Requests,17487.29
+2025-09-01,Lambda: Requests,30439.42
+2025-10-01,Lambda: Requests,29355.59
+2025-11-01,Lambda: Requests,26497.93
+2025-12-01,Lambda: Requests,24520.61
+2023-01-01,RDS: Legacy Database,91076.23
+2023-02-01,RDS: Legacy Database,90274.8
+2023-03-01,RDS: Legacy Database,84890.99
+2023-04-01,RDS: Legacy Database,81408.11
+2023-05-01,RDS: Legacy Database,79952.28
+2023-06-01,RDS: Legacy Database,78484.99
+2023-07-01,RDS: Legacy Database,75953.15
+2023-08-01,RDS: Legacy Database,71031.22
+2023-09-01,RDS: Legacy Database,70980.98
+2023-10-01,RDS: Legacy Database,68856.46
+2023-11-01,RDS: Legacy Database,71034.95
+2023-12-01,RDS: Legacy Database,67353.69
+2024-01-01,RDS: Legacy Database,59493.51
+2024-02-01,RDS: Legacy Database,58225.23
+2024-03-01,RDS: Legacy Database,53473.12
+2024-04-01,RDS: Legacy Database,52818.59
+2024-05-01,RDS: Legacy Database,52231.21
+2024-06-01,RDS: Legacy Database,51611.71
+2024-07-01,RDS: Legacy Database,45341.83
+2024-08-01,RDS: Legacy Database,43091.71
+2024-09-01,RDS: Legacy Database,37705.42
+2024-10-01,RDS: Legacy Database,39274.67
+2024-11-01,RDS: Legacy Database,35075.17
+2024-12-01,RDS: Legacy Database,33741.12
+2025-01-01,RDS: Legacy Database,30646.28
+2025-02-01,RDS: Legacy Database,29811.47
+2025-03-01,RDS: Legacy Database,24084.54
+2025-04-01,RDS: Legacy Database,22265.91
+2025-05-01,RDS: Legacy Database,27058.49
+2025-06-01,RDS: Legacy Database,17825.15
+2025-07-01,RDS: Legacy Database,15806.43
+2025-08-01,RDS: Legacy Database,19273.83
+2025-09-01,RDS: Legacy Database,19010.13
+2025-10-01,RDS: Legacy Database,8456.87
+2025-11-01,RDS: Legacy Database,7663.5
+2025-12-01,RDS: Legacy Database,6683.11
+2023-01-01,Marketplace: Software,4639.22
+2023-02-01,Marketplace: Software,60158.25
+2023-03-01,Marketplace: Software,4951.36
+2023-04-01,Marketplace: Software,6046.58
+2023-05-01,Marketplace: Software,60786.68
+2023-06-01,Marketplace: Software,5192.92
+2023-07-01,Marketplace: Software,59618.47
+2023-08-01,Marketplace: Software,59443.79
+2023-09-01,Marketplace: Software,5595.57
+2023-10-01,Marketplace: Software,5131.37
+2023-11-01,Marketplace: Software,5240.07
+2023-12-01,Marketplace: Software,4127.71
+2024-01-01,Marketplace: Software,5463.72
+2024-02-01,Marketplace: Software,5227.21
+2024-03-01,Marketplace: Software,4444.78
+2024-04-01,Marketplace: Software,4764.24
+2024-05-01,Marketplace: Software,5131.86
+2024-06-01,Marketplace: Software,5026.23
+2024-07-01,Marketplace: Software,4853.91
+2024-08-01,Marketplace: Software,4948.26
+2024-09-01,Marketplace: Software,4874.01
+2024-10-01,Marketplace: Software,5076.28
+2024-11-01,Marketplace: Software,60735.75
+2024-12-01,Marketplace: Software,3716.67
+2025-01-01,Marketplace: Software,4881.57
+2025-02-01,Marketplace: Software,5088.26
+2025-03-01,Marketplace: Software,5148.0
+2025-04-01,Marketplace: Software,4814.04
+2025-05-01,Marketplace: Software,59121.64
+2025-06-01,Marketplace: Software,5164.0
+2025-07-01,Marketplace: Software,60863.68
+2025-08-01,Marketplace: Software,4233.07
+2025-09-01,Marketplace: Software,60431.91
+2025-10-01,Marketplace: Software,4835.74
+2025-11-01,Marketplace: Software,4969.34
+2025-12-01,Marketplace: Software,59473.55
+2023-01-01,Support: Business,30000.0
+2023-02-01,Support: Business,30000.0
+2023-03-01,Support: Business,30000.0
+2023-04-01,Support: Business,30000.0
+2023-05-01,Support: Business,30000.0
+2023-06-01,Support: Business,30000.0
+2023-07-01,Support: Business,30000.0
+2023-08-01,Support: Business,30000.0
+2023-09-01,Support: Business,30000.0
+2023-10-01,Support: Business,30000.0
+2023-11-01,Support: Business,30000.0
+2023-12-01,Support: Business,30000.0
+2024-01-01,Support: Business,30000.0
+2024-02-01,Support: Business,30000.0
+2024-03-01,Support: Business,30000.0
+2024-04-01,Support: Business,30000.0
+2024-05-01,Support: Business,30000.0
+2024-06-01,Support: Business,30000.0
+2024-07-01,Support: Business,30000.0
+2024-08-01,Support: Business,30000.0
+2024-09-01,Support: Business,30000.0
+2024-10-01,Support: Business,30000.0
+2024-11-01,Support: Business,30000.0
+2024-12-01,Support: Business,30000.0
+2025-01-01,Support: Business,30000.0
+2025-02-01,Support: Business,30000.0
+2025-03-01,Support: Business,30000.0
+2025-04-01,Support: Business,30000.0
+2025-05-01,Support: Business,30000.0
+2025-06-01,Support: Business,30000.0
+2025-07-01,Support: Business,30000.0
+2025-08-01,Support: Business,30000.0
+2025-09-01,Support: Business,30000.0
+2025-10-01,Support: Business,30000.0
+2025-11-01,Support: Business,30000.0
+2025-12-01,Support: Business,30000.0
+2023-01-01,Tax: Sales Tax,51826.08
+2023-02-01,Tax: Sales Tax,52676.02
+2023-03-01,Tax: Sales Tax,52302.98
+2023-04-01,Tax: Sales Tax,52900.8
+2023-05-01,Tax: Sales Tax,52612.25
+2023-06-01,Tax: Sales Tax,52228.33
+2023-07-01,Tax: Sales Tax,52906.85
+2023-08-01,Tax: Sales Tax,52228.28
+2023-09-01,Tax: Sales Tax,52430.55
+2023-10-01,Tax: Sales Tax,51845.78
+2023-11-01,Tax: Sales Tax,52034.6
+2023-12-01,Tax: Sales Tax,51637.34
+2024-01-01,Tax: Sales Tax,52514.58
+2024-02-01,Tax: Sales Tax,51387.28
+2024-03-01,Tax: Sales Tax,52406.82
+2024-04-01,Tax: Sales Tax,51900.86
+2024-05-01,Tax: Sales Tax,52609.05
+2024-06-01,Tax: Sales Tax,52390.45
+2024-07-01,Tax: Sales Tax,52946.74
+2024-08-01,Tax: Sales Tax,52380.0
+2024-09-01,Tax: Sales Tax,51182.54
+2024-10-01,Tax: Sales Tax,51965.18
+2024-11-01,Tax: Sales Tax,51390.56
+2024-12-01,Tax: Sales Tax,51730.49
+2025-01-01,Tax: Sales Tax,52785.84
+2025-02-01,Tax: Sales Tax,52331.52
+2025-03-01,Tax: Sales Tax,51636.56
+2025-04-01,Tax: Sales Tax,51472.87
+2025-05-01,Tax: Sales Tax,52017.05
+2025-06-01,Tax: Sales Tax,51367.39
+2025-07-01,Tax: Sales Tax,51651.01
+2025-08-01,Tax: Sales Tax,52162.24
+2025-09-01,Tax: Sales Tax,52600.76
+2025-10-01,Tax: Sales Tax,52316.56
+2025-11-01,Tax: Sales Tax,50808.53
+2025-12-01,Tax: Sales Tax,52158.27

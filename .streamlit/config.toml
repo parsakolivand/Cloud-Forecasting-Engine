@@ -1,0 +1,10 @@
+[theme]
+primaryColor = "#2a78d6"
+
+[client]
+# Hide developer options such as the Deploy button.
+toolbarMode = "viewer"
+
+[browser]
+# Billing data is sensitive: send no usage statistics.
+gatherUsageStats = false
