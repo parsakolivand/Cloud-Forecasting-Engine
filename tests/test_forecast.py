@@ -168,3 +168,55 @@ def test_compare_seasonal_has_a_row_per_method_and_actuals():
     assert table.loc[forecast.OWN_WEIGHTS, "Off by"] == pytest.approx(0, abs=1e-9)
     assert table.loc[forecast.FIXED_VARIABLE, "Off by"] == pytest.approx(0, abs=1e-9)
     assert table.loc[forecast.FIXED_VARIABLE_BY_BUCKET, "Off by"] == pytest.approx(0, abs=1e-9)
+
+
+def test_linear_second_year_starts_where_the_first_year_line_ended():
+    costs = costs_table("S3: Storage", [100.0] * 12)
+    result = forecast.build(costs, 2025, {"S3: Storage": drivers.GROWING}, {},
+                            default_growth=0.07, years=2)
+    assert result["month"].min() == pd.Timestamp("2026-01-01")
+    assert result["month"].max() == pd.Timestamp("2027-12-01")
+    z1 = forecast.monthly_increment(100, 0.07)
+    exit_2026 = 100 + 12 * z1  # December 2026 line value, before day scaling
+    z2 = forecast.monthly_increment(exit_2026, 0.07)
+    jan_2027 = result.set_index("month").loc["2027-01-01", "forecast"]
+    assert jan_2027 == pytest.approx((exit_2026 + z2) / (365 / 12) * 31)
+
+
+def test_fixed_two_years_ahead_grows_once_per_year():
+    costs = costs_table("Support: Business", [500.0] * 12)
+    result = forecast.build(costs, 2025, {"Support: Business": drivers.FIXED}, {},
+                            default_growth=0.0, years=2)
+    assert result["forecast"].tolist() == [500.0] * 24
+
+
+def test_seasonal_weights_compound_each_year():
+    costs = costs_table("EC2: Compute", [100.0] * 12)
+    result = forecast.build(costs, 2025, {"EC2: Compute": drivers.VERY_HIGH}, {},
+                            default_growth=0.07, seasonal=forecast.Seasonal(weights=WEIGHTS),
+                            years=2)
+    totals = result.groupby(result["month"].dt.year)["forecast"].sum()
+    assert totals[2026] == pytest.approx(100 / 0.075 * 1.07)
+    assert totals[2027] == pytest.approx(100 / 0.075 * 1.07 ** 2)
+
+
+def test_fixed_variable_grows_requests_each_year():
+    months = pd.date_range("2025-01-01", periods=12, freq="MS")
+    reqs = np.arange(1, 13, dtype=float) * 1000
+    requests = pd.DataFrame({"month": months, "requests": reqs})
+    costs = costs_table("EC2: Compute", list(500 + 0.1 * reqs))
+    seasonal = forecast.Seasonal(method=forecast.FIXED_VARIABLE, requests=requests,
+                                 request_growth=0.10)
+    result = forecast.build(costs, 2025, {"EC2: Compute": drivers.VERY_HIGH}, {},
+                            seasonal=seasonal, years=2)
+    year_2027 = result[result["month"].dt.year == 2027]["forecast"]
+    assert year_2027.tolist() == pytest.approx(list(500 + 0.1 * reqs * 1.10 ** 2))
+
+
+def test_summarize_reports_the_chosen_forecast_year():
+    costs = costs_table("S3: Storage", [100.0] * 12)
+    result = forecast.build(costs, 2025, {}, {}, default_growth=0.07, years=2)
+    summary = forecast.summarize(costs, result, 2025, target_year=2027).set_index("service_item")
+    in_2027 = result[result["month"].dt.year == 2027]["forecast"].sum()
+    assert summary.loc["S3: Storage", "forecast_total"] == pytest.approx(in_2027)
+    assert summary.loc["S3: Storage", "baseline_total"] == 1200

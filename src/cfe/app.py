@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[2]
 EXAMPLES = ROOT / "examples"
 TEMPLATES = ROOT / "templates"
 REPO_URL = "https://github.com/parsakolivand/Cloud-Forecasting-Engine"
+MAX_YEARS_AHEAD = 5
 UPLOAD, AWS, SAMPLE = "Upload a CSV file", "Connect to AWS billing", "Try sample data"
 YEAR_COLORS = ["#2a78d6", "#eb6834", "#1baf7a"]  # categorical slots 1-3, safe together on a scatter
 MUTED = "#898781"
@@ -478,22 +479,32 @@ def forecast_tab(costs: pd.DataFrame, requests: pd.DataFrame | None, report) -> 
     options = [str(y) for y in reversed(years)]
     with st.container(border=True):
         st.markdown("**:material/tune: Forecast settings**")
-        left, right = st.columns(2)
+        left, middle, right = st.columns(3)
         baseline = int(left.segmented_control("Baseline year", options, default=options[0],
                                               key="baseline") or options[0])
-        target = baseline + 1
+        targets = st.session_state.setdefault("targets", {})
+        choices = list(range(baseline + 1, baseline + 1 + MAX_YEARS_AHEAD))
+        target = targets[baseline] = middle.selectbox(
+            "Forecast year", choices, index=choices.index(targets.get(baseline, baseline + 1)),
+            key=f"target-{baseline}",
+        )
         defaults = st.session_state.setdefault("default_growth", {})
         defaults[baseline] = right.number_input(
-            f"Growth for {target} (%)",
+            "Growth per year (%)",
             min_value=-100.0, max_value=1000.0, value=defaults.get(baseline, 0.0), step=1.0,
             key=f"default-growth-{baseline}",
-            help="Applied to every service item you have not set yourself below.",
+            help="Applied to every service item you have not set yourself below, once for "
+                 f"each year from {baseline + 1} to {target}.",
         )
-        st.caption(f"Forecast for {target}, starting from the December {baseline} exit rate. "
-                   "Each baseline year keeps its own settings.")
+        between = (f" {baseline + 1}" + (f" to {target - 1}" if target - baseline > 2 else "")
+                   + " is forecast first, and each year starts from the previous forecast "
+                     "December, so growth is applied once per year.")
+        st.caption(f"Forecast for {target}, starting from the December {baseline} exit rate."
+                   + (between if target - baseline > 1 else "")
+                   + " Each baseline year keeps its own settings.")
         seasonal_controls(costs, requests, report, baseline, target)
         forecast_methods(baseline)
-    _, growth, result, summary = scenario(costs, requests, report, baseline)
+    _, growth, result, summary = scenario(costs, requests, report, baseline, target)
     if result.empty:
         st.warning(f"No service item has a cost in December {baseline} to start from.")
         return
@@ -516,7 +527,7 @@ def forecast_tab(costs: pd.DataFrame, requests: pd.DataFrame | None, report) -> 
     choice = st.selectbox("Show", ["All service items", *items], key="forecast_item")
     picked = costs if choice == "All service items" else costs[costs["service_item"] == choice]
     picked_fc = result if choice == "All service items" else result[result["service_item"] == choice]
-    st.altair_chart(forecast_chart(picked, picked_fc, baseline), width="stretch")
+    st.altair_chart(forecast_chart(picked, picked_fc, baseline, target), width="stretch")
 
     bucket_breakdown(summary, baseline, target)
 
@@ -527,14 +538,15 @@ def forecast_tab(costs: pd.DataFrame, requests: pd.DataFrame | None, report) -> 
     with seasonal_tab:
         compare_seasonal_methods(costs, requests, report, baseline, target)
     with growth_tab:
-        growth_section(costs, summary, growth, years, baseline)
+        growth_section(costs, summary, growth, years, baseline, target)
     with baselines_tab:
-        compare_baselines(costs, requests, report, years)
+        compare_baselines(costs, requests, report, years, target - baseline)
     with monthly_tab:
         monthly_table(result, target)
 
 
-def growth_section(costs, summary, growth, years: list[int], baseline: int) -> None:
+def growth_section(costs, summary, growth, years: list[int], baseline: int,
+                   target: int) -> None:
     how = st.segmented_control(
         "Growth within each past year",
         [forecast.AVERAGE_MOM, forecast.JAN_TO_DEC],
@@ -550,11 +562,13 @@ def growth_section(costs, summary, growth, years: list[int], baseline: int) -> N
     custom = st.session_state.setdefault("growth", {}).setdefault(baseline, {})
     label = "Avg MoM" if how == forecast.AVERAGE_MOM else "Jan vs Dec"
     growth_editor(summary, growth, custom, forecast.in_year_growth(costs, years, how),
-                  baseline, label)
+                  baseline, label, target)
 
 
 def monthly_table(result: pd.DataFrame, target: int) -> None:
-    monthly = result.pivot_table(index="service_item", columns="month", values="forecast",
+    if result["month"].dt.year.nunique() > 1:
+        st.caption("The download includes every forecast year up to " f"{target}.")
+    monthly = result[result["month"].dt.year == target].pivot_table(index="service_item", columns="month", values="forecast",
                                  aggfunc="sum")
     monthly.loc["Total"] = monthly.sum()
     monthly.columns = [f"{m:%b %Y}" for m in monthly.columns]
@@ -583,7 +597,10 @@ def forecast_methods(baseline: int) -> None:
             "- **Linear**: each month builds on the previous one, adding Z = ((exit rate × 12) "
             "× (1 + growth) − (exit rate × 12)) ÷ 78. Each month is then ÷ 30.4 "
             "(an average month) × its number of days.\n"
-            "- **Fixed**: the same as linear, without the day scaling (billed per month)."
+            "- **Fixed**: the same as linear, without the day scaling (billed per month).\n\n"
+            "Forecasting more than one year ahead repeats the method one year at a time: "
+            "each year starts from the previous year's forecast December. Fixed + variable "
+            "grows the requests once per year instead."
         )
 
 
@@ -614,7 +631,7 @@ def seasonal_controls(costs, requests, report, baseline: int, target: int) -> No
     else:
         rates = st.session_state.setdefault("request_growth", {})
         rates[baseline] = st.number_input(
-            f"Request growth for {target} (%)", min_value=-100.0, max_value=1000.0,
+            "Request growth per year (%)", min_value=-100.0, max_value=1000.0,
             value=rates.get(baseline, 0.0), step=1.0, key=f"request-growth-{baseline}",
             help=f"Forecast requests = {baseline} requests × (1 + request growth).",
         )
@@ -715,14 +732,16 @@ def growth_for(costs: pd.DataFrame, baseline: int) -> dict[str, float]:
     return {item: custom.get(item, default) for item in costs["service_item"].unique()}
 
 
-def scenario(costs, requests, report, baseline: int):
-    """Buckets, growth, monthly forecast and per-item summary for one baseline year,
-    using the settings saved for that year."""
+def scenario(costs, requests, report, baseline: int, target: int | None = None):
+    """Buckets, growth, monthly forecast and per-item summary for one baseline year and
+    forecast year (default: the next year), using the settings saved for the baseline."""
+    target = target or baseline + 1
     buckets = item_buckets(costs, requests, report, baseline)
     growth = growth_for(costs, baseline)
     result = forecast.build(costs, baseline, buckets, growth,
-                            seasonal=seasonal_settings(requests, baseline))
-    return buckets, growth, result, forecast.summarize(costs, result, baseline)
+                            seasonal=seasonal_settings(requests, baseline),
+                            years=target - baseline)
+    return buckets, growth, result, forecast.summarize(costs, result, baseline, target)
 
 
 def compare_seasonal_methods(costs, requests, report, baseline: int, target: int) -> None:
@@ -733,6 +752,7 @@ def compare_seasonal_methods(costs, requests, report, baseline: int, target: int
     table = forecast.compare_seasonal(
         costs, baseline, buckets, growth_for(costs, baseline), methods, requests,
         st.session_state.get("request_growth", {}).get(baseline, 0.0) / 100,
+        years_ahead=target - baseline,
     )
     if table.empty or forecast.ALL_SEASONAL not in table:
         st.caption("No seasonal service items in this baseline year.")
@@ -777,22 +797,23 @@ def bucket_breakdown(summary: pd.DataFrame, baseline: int, target: int) -> None:
     st.dataframe(items[columns], hide_index=True, column_config=config)
 
 
-def compare_baselines(costs, requests, report, years: list[int]) -> None:
+def compare_baselines(costs, requests, report, years: list[int], years_ahead: int) -> None:
     tables, notes = {}, []
     for year in years:
-        *_, summary = scenario(costs, requests, report, year)
+        *_, summary = scenario(costs, requests, report, year, year + years_ahead)
         if summary.empty:
             continue
         tables[year] = forecast.by_bucket(summary)
         default = st.session_state.get("default_growth", {}).get(year, 0.0)
         custom = len(st.session_state.get("growth", {}).get(year, {}))
         notes.append(f"{year}: {default:g}%" + (f" (+{custom} items set by you)" if custom else ""))
+    ahead = "the next year" if years_ahead == 1 else f"{years_ahead} years ahead"
     st.caption(
-        "The forecast from each baseline year, with the growth saved for it ("
+        f"The forecast {ahead} from each baseline year, with the growth saved for it ("
         + "; ".join(notes) + "). Where the forecast year has already happened, the actual "
         "cost and the error show which baseline forecast best."
     )
-    table = forecast.compare(tables)
+    table = forecast.compare(tables, years_ahead)
     config = {"bucket": "Bucket"} | {
         c: st.column_config.NumberColumn(c, format="percent" if c.startswith("Off by") else MONEY)
         for c in table.columns if c != "bucket"
@@ -810,8 +831,8 @@ def item_buckets(costs, requests, report, baseline: int) -> dict[str, str]:
     return dict(zip(view["service_item"], view["bucket"]))
 
 
-def growth_editor(summary, growth, custom, history, baseline: int, label: str) -> None:
-    target = baseline + 1
+def growth_editor(summary, growth, custom, history, baseline: int, label: str,
+                  target: int) -> None:
     table = summary.merge(history, on="service_item", how="left")
     table["growth"] = table["service_item"].map(growth) * 100
     table["set_by"] = table["service_item"].isin(custom).map({True: "You", False: "Default"})
@@ -826,7 +847,7 @@ def growth_editor(summary, growth, custom, history, baseline: int, label: str) -
         **{y: st.column_config.NumberColumn(f"{label} {y}", format="percent") for y in years},
         "baseline_total": st.column_config.NumberColumn("Baseline year", format="dollar"),
         "exit_rate": st.column_config.NumberColumn("Exit rate (Dec)", format="dollar"),
-        "growth": st.column_config.NumberColumn(f"Growth {target} (%)", format="%.1f",
+        "growth": st.column_config.NumberColumn("Growth per year (%)", format="%.1f",
                                                 min_value=-100, step=0.5),
         "set_by": "Set by",
         "forecast_total": st.column_config.NumberColumn(f"Forecast {target}", format="dollar"),
@@ -854,9 +875,10 @@ def growth_editor(summary, growth, custom, history, baseline: int, label: str) -
         st.rerun()
 
 
-def forecast_chart(costs: pd.DataFrame, result: pd.DataFrame, baseline: int) -> alt.Chart:
+def forecast_chart(costs: pd.DataFrame, result: pd.DataFrame, baseline: int,
+                   target: int) -> alt.Chart:
     years = costs["month"].dt.year
-    actual = costs[years.isin([baseline, baseline + 1])].groupby("month")["cost"].sum()
+    actual = costs[years.between(baseline, target)].groupby("month")["cost"].sum()
     predicted = result.groupby("month")["forecast"].sum()
     exit_month = pd.Timestamp(year=baseline, month=12, day=1)
     # Start the forecast line at the exit rate so the two lines join up.

@@ -8,13 +8,15 @@ An open forecasting engine for FinOps teams. Upload your monthly cloud cost and 
 
 1. **Add your data**: monthly cost per service item and total requests (API calls) per month, for at least 12 months.
 2. **Find the cost drivers**: each service item is compared with requests, one calendar year at a time, and placed in a bucket.
-3. **Forecast next year**: pick a baseline year and a growth rate, and the engine forecasts every service item with the method that suits its bucket.
+3. **Forecast any future year**: pick a baseline year, a forecast year (for example 2027 from 2025 data) and a growth rate per year. The engine forecasts every service item with the method that suits its bucket.
 
 | Bucket | What it means | Example | How it is forecast |
 |---|---|---|---|
 | **Seasonal** (very high, high, mid) | Cost follows requests: correlation of 0.5 or more | Compute, data transfer | Request weights, manual weights, the item's own cost weights, or fixed + variable (LINEST) |
 | **Linear** (growing, declining) | Cost does not follow requests | Storage, a workload being retired | A constant monthly step from the December exit rate |
 | **Fixed** | Cost barely moves (under 5% swing) | Support, tax | The same step, without day scaling |
+
+To forecast more than one year ahead, the engine repeats the method one year at a time: each year starts from the previous year's forecast December, so growth is applied once per year.
 
 ![Cost drivers tab](docs/cost-drivers.png)
 

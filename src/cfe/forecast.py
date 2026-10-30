@@ -25,6 +25,11 @@ Linear items (exit-rate method): add a constant step Z every month,
 
 where 30.4 (= 365 / 12) is the average month length. Fixed items use the same
 step without the day scaling, since they are billed per month.
+
+Forecasting further ahead (for example 2027 from a 2025 baseline) repeats the
+method one year at a time: each year starts from the previous year's forecast
+December, so growth is applied once per year. Fixed + variable instead grows
+the requests once per year.
 """
 
 from __future__ import annotations
@@ -130,23 +135,29 @@ def fit_fixed_variable(requests: np.ndarray, cost: np.ndarray) -> tuple[float, f
     return float(slope), float(intercept)
 
 
-def forecast_requests(requests: pd.DataFrame, baseline_year: int, growth: float) -> pd.Series:
-    """Requests per forecast month: the baseline year's requests grown by ``growth``."""
+def forecast_requests(
+    requests: pd.DataFrame, baseline_year: int, growth: float, years_ahead: int = 1
+) -> pd.Series:
+    """Requests per month of year ``baseline_year + years_ahead``: the baseline year's
+    requests grown by ``growth`` once per year."""
     in_year = requests[requests["month"].dt.year == baseline_year].sort_values("month")
-    months = forecast_months(pd.Timestamp(year=baseline_year, month=12, day=1))
-    return pd.Series(in_year["requests"].to_numpy(float) * (1 + growth), index=months)
+    months = forecast_months(pd.Timestamp(year=baseline_year + years_ahead - 1, month=12, day=1))
+    factor = (1 + growth) ** years_ahead
+    return pd.Series(in_year["requests"].to_numpy(float) * factor, index=months)
 
 
 def fixed_variable_months(
-    cost: pd.Series, requests: pd.DataFrame, baseline_year: int, request_growth: float
+    cost: pd.Series, requests: pd.DataFrame, baseline_year: int, request_growth: float,
+    years_ahead: int = 1,
 ) -> pd.DataFrame | None:
-    """Fit cost (indexed by month) against requests in the baseline year, then forecast."""
+    """Fit cost (indexed by month) against requests in the baseline year, then forecast
+    year ``baseline_year + years_ahead``."""
     in_year = cost[cost.index.year == baseline_year]
     reqs = requests.set_index("month")["requests"].reindex(in_year.index)
     if len(in_year) != 12 or reqs.isna().any() or reqs.nunique() < 2:
         return None
     slope, fixed = fit_fixed_variable(reqs.to_numpy(), in_year.to_numpy())
-    future = forecast_requests(requests, baseline_year, request_growth)
+    future = forecast_requests(requests, baseline_year, request_growth, years_ahead)
     values = np.maximum(fixed + slope * future.to_numpy(), 0.0)
     return pd.DataFrame({"month": future.index, "forecast": values})
 
@@ -163,29 +174,30 @@ def build(
     growth: dict[str, float],
     default_growth: float = 0.0,
     seasonal: Seasonal | None = None,
+    years: int = 1,
 ) -> pd.DataFrame:
-    """Forecast every service item for the year after ``baseline_year``.
+    """Forecast every service item for the ``years`` years after ``baseline_year``.
 
-    ``buckets`` and ``growth`` map service item -> bucket / growth rate (0.07 = 7%).
-    Items missing from ``growth`` use ``default_growth``. ``seasonal`` sets the
-    method for seasonal items; without what that method needs (weights,
+    ``buckets`` and ``growth`` map service item -> bucket / growth rate per year
+    (0.07 = 7%). Items missing from ``growth`` use ``default_growth``. ``seasonal``
+    sets the method for seasonal items; without what that method needs (weights,
     requests), they fall back to the exit-rate method.
     """
-    exit_month = pd.Timestamp(year=baseline_year, month=12, day=1)
+    baseline_december = pd.Timestamp(year=baseline_year, month=12, day=1)
     frames = []
     for (service, item), group in costs.groupby(["service", "service_item"], sort=False):
-        december = group.loc[group["month"] == exit_month, "cost"]
+        december = group.loc[group["month"] == baseline_december, "cost"]
         if december.empty:
             continue
         bucket = buckets.get(item, NOT_CLASSIFIED)
         exit_rate, item_growth = float(december.iloc[0]), growth.get(item, default_growth)
-        months, method = None, method_for(bucket)
+        method = method_for(bucket)
         if bucket in drivers.SEASONAL and seasonal is not None:
-            months = _seasonal_item(group, exit_rate, item_growth, exit_month, seasonal)
+            months = _seasonal_item(group, exit_rate, item_growth, baseline_year, seasonal, years)
             if months is not None:
                 method = f"Seasonal: {seasonal.method.lower()}"
-        if months is None:
-            months = exit_rate_months(exit_rate, item_growth, exit_month,
+        if method in (EXIT_RATE, EXIT_RATE_FLAT_DAYS):
+            months = _exit_rate_years(exit_rate, item_growth, baseline_year, years,
                                       day_adjust=method == EXIT_RATE)
         frames.append(months.assign(service=service, service_item=item, bucket=bucket,
                                     method=method))
@@ -194,32 +206,53 @@ def build(
     return pd.concat(frames, ignore_index=True)[FORECAST_COLUMNS]
 
 
-def _seasonal_item(group, exit_rate, growth, exit_month, seasonal: Seasonal):
+def _exit_rate_years(exit_rate, growth, baseline_year, years, day_adjust) -> pd.DataFrame:
+    """The exit-rate method, one year at a time; each year starts where the line ended."""
+    frames = []
+    for n in range(years):
+        exit_month = pd.Timestamp(year=baseline_year + n, month=12, day=1)
+        frames.append(exit_rate_months(exit_rate, growth, exit_month, day_adjust))
+        # The next year starts from December's line value, before day scaling.
+        end = exit_rate + 12 * monthly_increment(exit_rate, growth)
+        exit_rate = max(end, 0.0) if exit_rate >= 0 else end
+    return pd.concat(frames, ignore_index=True)
+
+
+def _seasonal_item(group, exit_rate, growth, baseline_year, seasonal: Seasonal, years: int):
     if seasonal.method == FIXED_VARIABLE:
         if seasonal.requests is None:
             return None
         cost = group.set_index("month")["cost"].sort_index()
-        return fixed_variable_months(cost, seasonal.requests, exit_month.year,
-                                     seasonal.request_growth)
-    weights = (own_weights(group, exit_month.year) if seasonal.method == OWN_WEIGHTS
+        frames = [fixed_variable_months(cost, seasonal.requests, baseline_year,
+                                        seasonal.request_growth, n) for n in range(1, years + 1)]
+        return None if frames[0] is None else pd.concat(frames, ignore_index=True)
+    weights = (own_weights(group, baseline_year) if seasonal.method == OWN_WEIGHTS
                else seasonal.weights)
-    if weights is None or weights.get(exit_month.month, 0) <= 0:
+    if weights is None or weights.get(12, 0) <= 0:
         return None
-    return seasonal_months(exit_rate, growth, weights, exit_month)
+    frames = []
+    for n in range(years):
+        months = seasonal_months(exit_rate, growth, weights,
+                                 pd.Timestamp(year=baseline_year + n, month=12, day=1))
+        frames.append(months)
+        exit_rate = months["forecast"].iloc[-1]  # December, = exit rate x (1 + growth)
+    return pd.concat(frames, ignore_index=True)
 
 
 def fixed_variable_by_bucket(
     costs: pd.DataFrame, requests: pd.DataFrame, baseline_year: int,
-    buckets: dict[str, str], request_growth: float,
+    buckets: dict[str, str], request_growth: float, years_ahead: int = 1,
 ) -> pd.Series:
-    """Forecast total per seasonal bucket, fitting each bucket's total cost at once."""
+    """Forecast total per seasonal bucket in year ``baseline_year + years_ahead``,
+    fitting each bucket's total cost at once."""
     totals = {}
     for bucket in drivers.SEASONAL:
         items = [i for i, b in buckets.items() if b == bucket]
         if not items:
             continue
         cost = costs[costs["service_item"].isin(items)].groupby("month")["cost"].sum()
-        months = fixed_variable_months(cost, requests, baseline_year, request_growth)
+        months = fixed_variable_months(cost, requests, baseline_year, request_growth,
+                                       years_ahead)
         if months is not None:
             totals[bucket] = months["forecast"].sum()
     return pd.Series(totals, dtype=float)
@@ -233,25 +266,30 @@ def compare_seasonal(
     methods: dict[str, Seasonal],
     requests: pd.DataFrame | None = None,
     request_growth: float = 0.0,
+    years_ahead: int = 1,
 ) -> pd.DataFrame:
-    """Forecast totals of the seasonal buckets under each method, one row per method.
+    """Forecast totals of the seasonal buckets in year ``baseline_year + years_ahead``
+    under each method, one row per method.
 
     Adds the fixed + variable fit per bucket when ``requests`` is given, and an
     Actual row with the error of each method when the forecast year has happened.
     """
     seasonal_items = {i: b for i, b in buckets.items() if b in drivers.SEASONAL}
     rows = {}
-    target = costs[costs["month"].dt.year == baseline_year + 1]
+    target_year = baseline_year + years_ahead
+    target = costs[costs["month"].dt.year == target_year]
     if target["month"].nunique() == 12:
         actual = target[target["service_item"].isin(seasonal_items)]
         rows[ACTUAL] = actual.groupby(actual["service_item"].map(seasonal_items))["cost"].sum()
     for label, seasonal in methods.items():
-        result = build(costs, baseline_year, buckets, growth, seasonal=seasonal)
-        result = result[result["bucket"].isin(drivers.SEASONAL)]
+        result = build(costs, baseline_year, buckets, growth, seasonal=seasonal,
+                       years=years_ahead)
+        result = result[result["bucket"].isin(drivers.SEASONAL)
+                        & (result["month"].dt.year == target_year)]
         rows[label] = result.groupby("bucket")["forecast"].sum()
     if requests is not None:
         rows[FIXED_VARIABLE_BY_BUCKET] = fixed_variable_by_bucket(
-            costs, requests, baseline_year, buckets, request_growth)
+            costs, requests, baseline_year, buckets, request_growth, years_ahead)
     table = pd.DataFrame(rows).T
     table = table[[b for b in drivers.SEASONAL if b in table.columns]]
     table[ALL_SEASONAL] = table.sum(axis=1)
@@ -295,12 +333,16 @@ def _growth_within(months: np.ndarray, how: str) -> float | None:
 
 
 def summarize(
-    costs: pd.DataFrame, forecast: pd.DataFrame, baseline_year: int
+    costs: pd.DataFrame, forecast: pd.DataFrame, baseline_year: int,
+    target_year: int | None = None,
 ) -> pd.DataFrame:
-    """Per service item: baseline actual, exit rate, forecast total, and actuals if they exist."""
+    """Per service item: baseline actual, exit rate, forecast total for ``target_year``
+    (default: the year after the baseline), and that year's actuals if they exist."""
+    target_year = target_year or baseline_year + 1
+    forecast = forecast[forecast["month"].dt.year == target_year]
     year = costs["month"].dt.year
     baseline = costs[year == baseline_year].groupby("service_item")["cost"].sum()
-    actual_next = costs[year == baseline_year + 1]
+    actual_next = costs[year == target_year]
     exit_rate = costs[costs["month"] == pd.Timestamp(year=baseline_year, month=12, day=1)]
     summary = pd.DataFrame({
         "bucket": forecast.groupby("service_item")["bucket"].first(),
@@ -330,13 +372,15 @@ def by_bucket(summary: pd.DataFrame) -> pd.DataFrame:
     return table.reset_index(names="bucket")
 
 
-def compare(tables: dict[int, pd.DataFrame]) -> pd.DataFrame:
-    """Side by side ``by_bucket`` tables, one set of columns per baseline year."""
+def compare(tables: dict[int, pd.DataFrame], years_ahead: int = 1) -> pd.DataFrame:
+    """Side by side ``by_bucket`` tables, one set of columns per baseline year, each
+    forecasting ``years_ahead`` years past its baseline."""
     frames = []
     for year, table in sorted(tables.items()):
-        columns = {"forecast_total": f"Forecast {year + 1} (from {year})"}
+        target = year + years_ahead
+        columns = {"forecast_total": f"Forecast {target} (from {year})"}
         if "actual_total" in table:
-            columns |= {"actual_total": f"Actual {year + 1}", "error": f"Off by ({year + 1})"}
+            columns |= {"actual_total": f"Actual {target}", "error": f"Off by ({target})"}
         frames.append(table.set_index("bucket")[list(columns)].rename(columns=columns))
     if not frames:
         return pd.DataFrame()

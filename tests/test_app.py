@@ -46,7 +46,7 @@ def test_forecast_tab_growth_and_backtest():
     labels = [m.label for m in at.metric]
     assert "Forecast 2026" in labels
 
-    next(n for n in at.number_input if n.label.startswith("Growth for")).set_value(7.0).run()
+    at.number_input(key="default-growth-2025").set_value(7.0).run()
     at.session_state["growth-2025-0"] = {
         "edited_rows": {"0": {"growth": 20.0}}, "added_rows": [], "deleted_rows": [],
     }
@@ -96,3 +96,24 @@ def test_marketplace_is_excluded_by_default():
 def test_root_entry_point_runs():
     at = AppTest.from_file(str(Path(__file__).parents[1] / "streamlit_app.py")).run()
     assert not at.exception
+
+
+def test_forecast_two_years_ahead():
+    at = AppTest.from_file(APP, default_timeout=30).run()
+    at.sidebar.radio[0].set_value("Try sample data").run()
+    at.selectbox(key="target-2025").set_value(2027).run()
+    assert not at.exception
+    labels = [m.label for m in at.metric]
+    assert "Forecast 2027" in labels and "Actual 2025" in labels
+
+    # From 2023, two years ahead is 2025, which can be checked against actuals.
+    at.segmented_control(key="baseline").set_value("2023").run()
+    at.selectbox(key="target-2023").set_value(2025).run()
+    assert not at.exception
+    assert "Actual 2025" in [m.label for m in at.metric]
+    compare = next(d.value for d in at.dataframe if "Forecast 2025 (from 2023)" in d.value.columns)
+    assert "Forecast 2027 (from 2025)" in compare.columns
+
+    # Going back to 2025 remembers 2027.
+    at.segmented_control(key="baseline").set_value("2025").run()
+    assert at.selectbox(key="target-2025").value == 2027
